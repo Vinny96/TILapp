@@ -33,9 +33,11 @@ final class Acronym : Model{
         self.id = id
         self.short = short
         self.long = long
+        print("Testing")
     }
-    
-    
-    
+}
+
+extension Acronym : Content
+{
     
 }
