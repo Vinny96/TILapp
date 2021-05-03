@@ -86,6 +86,91 @@ func routes(_ app: Application) throws {
          */
     }
     
+    app.get("api","acronyms","search"){
+        req -> EventLoopFuture<[Acronym]> in
+        guard let searchTerm = req.query[String.self, at : "term"] else {
+            throw Abort(.badRequest)
+        }
+        /*return Acronym.query(on: req.db)
+            .filter(\.$short == searchTerm)
+            .all()*/
+        return Acronym.query(on: req.db).group(.or){ or in
+            or.filter(\.$short == searchTerm)
+            or.filter(\.$long == searchTerm)
+        }.all()
+        /**
+         Here is what is going on to search the acronyms
+         1) Register a new route handler that accepts  a GET request for /api/acronyms/search and returns EventLoopFuture<[Acronym]>
+         2) Retrieve the search term from the URL query string. If this fails, throw a 400 Bad Request error.
+         3) User filter to find all acronms whose short property matches the searchTerm. Beccause this uses key paths, the compiler can enforce type-safety on teh properties and filter terms. This prevents run-time issues caused by specifying an invalid column name or invalid type to filter on. Fluent uses the property wrapper's projected value, instead of the value itself.
+         
+         Update so the updated code is now searching multiple fields so in this case both the short and long field. So to we added a filter to the group that will filter for acronyms whose short property matches the searchTerm and a filter for acronyms whose long property matches the searchTerm.
+         
+         
+         */
+    }
     
+    app.get("api","acronyms","first"){
+        req -> EventLoopFuture<Acronym> in
+        Acronym.query(on: req.db)
+            .first()
+            .unwrap(or: Abort(.notFound))
+        
+        /**
+         This creates a new route HTTP Get route at /api/acronyms/first that retursn EventLoopFuture<Acronym>
+          We then perform a query to get the first acronym. However first returns an optional as there may be no acronyms in teh database. That is why we use unwrap as this covers the case where if no acronyms exsit we throw a 404 not found error. 
+         */
+    }
+    
+    app.get("api","acronyms","sorted"){
+        req -> EventLoopFuture<[Acronym]> in
+        Acronym.query(on: req.db)
+            .sort(\.$short, .ascending)
+            .all()
+        
+        /**
+        So here we are creating a new route handler at /api/acronyms/sorted that returns an EventLoopFuture<[Acronym]>
+         
+         So here we create a query for Acronym and we use the sort function to perform the sort. The keypath we provide to the property's wrapper is short and we also provide the direction to sort in which is ascending. We use all() to return all the results of the query.
+         
+         */
+    }
+    
+    app.get("api","acronyms","sorted","first"){
+        req -> EventLoopFuture<Acronym> in
+        Acronym.query(on: req.db)
+            .sort(\.$short, .ascending)
+            .first()
+            .unwrap(or: Abort(.notFound))
+        
+        /**
+         So here we are creating a route handler at /api/acronyms/sorted/first that returns an EventLoopFuture<Acronym>. We crete a query for Acronym and we perform a sort. The keypath we provide in is short and the sort order is ascending. We then want to get the first Acronym of the sorted results. We then use unwrap as there could be a chance that nothing is in the database and if in this case we throw a .notFound 404 error.
+         */
+    }
+    
+    
+    app.get("api","acronyms","sorted","longDescending"){
+        req -> EventLoopFuture<[Acronym]> in
+        Acronym.query(on: req.db)
+            .sort(\.$long,.descending)
+            .all()
+        
+        /**
+         So here we are creating a route handelr at /api/acronyms/sorted/longDescending that returns an EventLoopFuture<[Acronym]>. We then create a query on Acronym and the keypath we provide is long, the sort order is descending. We then return all the results.
+         */
+    }
+    
+    app.get("api","acronyms","sorted","longAscending"){
+        req -> EventLoopFuture<[Acronym]> in
+        Acronym.query(on: req.db)
+            .sort(\.$long, .ascending)
+            .all()
+        
+        /**
+         We create a route handler at /api/acronyms/sorted/longAscending and this method returns an EventLoopFuture<[Acronym]>
+         
+         We then create a query on Acronym and the keypath we provide is long and the order is ascending. We then return all the results. 
+         */
+    }
     
 }
